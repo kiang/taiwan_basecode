@@ -15,7 +15,7 @@ from typing import Dict, Any, List
 # Database connection parameters
 DB_CONFIG = {
     'host': 'localhost',
-    'port': 5432,
+    'port': 5433,
     'database': 'taiwan_gis',
     'user': 'gis_user',
     'password': 'gis_password'

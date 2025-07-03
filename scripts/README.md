@@ -39,7 +39,7 @@ This directory contains scripts to set up a PostGIS Docker container and load Ge
 ## Database Connection
 
 - **Host:** localhost
-- **Port:** 5432
+- **Port:** 5433
 - **Database:** taiwan_gis
 - **User:** gis_user
 - **Password:** gis_password
@@ -82,7 +82,7 @@ Once data is loaded, you can perform various GIS operations:
 
 ```sql
 -- Connect to database
-psql -h localhost -U gis_user -d taiwan_gis
+psql -h localhost -p 5433 -U gis_user -d taiwan_gis
 
 -- Basic geometry queries
 SELECT ST_AsText(geom) FROM city_boundaries LIMIT 1;

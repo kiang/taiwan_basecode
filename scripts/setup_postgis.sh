@@ -65,7 +65,34 @@ start_postgis() {
     print_status "Starting PostGIS container..."
     
     cd "$SCRIPT_DIR"
-    docker-compose up -d
+    
+    # Create network if it doesn't exist
+    docker network create taiwan_postgis_network 2>/dev/null || true
+    
+    # Create volume if it doesn't exist
+    docker volume create postgis_data 2>/dev/null || true
+    
+    # Stop and remove existing container if it exists
+    docker stop taiwan_postgis 2>/dev/null || true
+    docker rm taiwan_postgis 2>/dev/null || true
+    
+    # Start PostGIS container using pure Docker CLI
+    docker run -d \
+        --name taiwan_postgis \
+        --network taiwan_postgis_network \
+        -e POSTGRES_DB=taiwan_gis \
+        -e POSTGRES_USER=gis_user \
+        -e POSTGRES_PASSWORD=gis_password \
+        -e PGDATA=/var/lib/postgresql/data/pgdata \
+        -p 5433:5432 \
+        -v postgis_data:/var/lib/postgresql/data \
+        -v "$SCRIPT_DIR/sql_init":/docker-entrypoint-initdb.d \
+        --restart unless-stopped \
+        --health-cmd "pg_isready -U gis_user -d taiwan_gis" \
+        --health-interval 10s \
+        --health-timeout 5s \
+        --health-retries 5 \
+        postgis/postgis:15-3.3
     
     print_status "Waiting for PostGIS to be ready..."
     
@@ -91,8 +118,14 @@ start_postgis() {
 # Function to stop PostGIS container
 stop_postgis() {
     print_status "Stopping PostGIS container..."
-    cd "$SCRIPT_DIR"
-    docker-compose down
+    
+    # Stop and remove container
+    docker stop taiwan_postgis 2>/dev/null || true
+    docker rm taiwan_postgis 2>/dev/null || true
+    
+    # Optionally remove network (but keep volume for data persistence)
+    # docker network rm taiwan_postgis_network 2>/dev/null || true
+    
     print_status "PostGIS container stopped"
 }
 
@@ -145,7 +178,7 @@ load_geojson() {
     print_status "GeoJSON file loaded successfully!"
     print_status "You can now connect to the database with:"
     print_status "  Host: localhost"
-    print_status "  Port: 5432"
+    print_status "  Port: 5433"
     print_status "  Database: taiwan_gis"
     print_status "  User: gis_user"
     print_status "  Password: gis_password"
