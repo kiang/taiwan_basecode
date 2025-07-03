@@ -152,10 +152,11 @@ check_status() {
 # Function to load GeoJSON file
 load_geojson() {
     local geojson_file="$1"
-    local table_name="$2"
+    local table_name="${2:-geojson_data}"  # Default to 'geojson_data' if not provided
     
-    if [ -z "$geojson_file" ] || [ -z "$table_name" ]; then
-        print_error "Usage: $0 <geojson_file> <table_name>"
+    if [ -z "$geojson_file" ]; then
+        print_error "Usage: $0 <geojson_file> [table_name]"
+        print_error "If table_name is not provided, 'geojson_data' will be used"
         exit 1
     fi
     
@@ -194,10 +195,16 @@ show_usage() {
     echo "  --status         Check container status"
     echo "  --help           Show this help message"
     echo ""
+    echo "Arguments:"
+    echo "  geojson_file     Path to GeoJSON file to load"
+    echo "  table_name       Name of table to create (optional, defaults to 'geojson_data')"
+    echo "                   Note: Existing table will be dropped and recreated"
+    echo ""
     echo "Examples:"
     echo "  $0 --start"
-    echo "  $0 city/city.geo.json city_boundaries"
-    echo "  $0 cunli/geo/20240807.json cunli_2024"
+    echo "  $0 city/city.geo.json                    # Loads into 'geojson_data' table"
+    echo "  $0 city/city.geo.json city_boundaries    # Loads into 'city_boundaries' table"
+    echo "  $0 cunli/geo/20240807.json              # Loads into 'geojson_data' table"
     echo "  $0 --stop"
 }
 

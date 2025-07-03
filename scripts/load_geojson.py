@@ -34,7 +34,8 @@ def create_table_from_geojson(cursor, table_name: str, geojson_data: Dict[str, A
     """Create table based on GeoJSON properties"""
     
     # Drop table if exists
-    cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
+    cursor.execute(f"DROP TABLE IF EXISTS {table_name} CASCADE")
+    print(f"Dropped existing table: {table_name} (if it existed)")
     
     # Analyze first feature to determine column types
     features = geojson_data.get('features', [])
@@ -125,7 +126,7 @@ def create_spatial_index(cursor, table_name: str):
     cursor.execute(index_sql)
     print(f"Created spatial index on {table_name}")
 
-def load_geojson_to_postgis(geojson_file: str, table_name: str):
+def load_geojson_to_postgis(geojson_file: str, table_name: str = "geojson_data"):
     """Main function to load GeoJSON into PostGIS"""
     
     # Check if file exists
@@ -171,7 +172,8 @@ def load_geojson_to_postgis(geojson_file: str, table_name: str):
 def main():
     parser = argparse.ArgumentParser(description='Load GeoJSON file into PostGIS database')
     parser.add_argument('geojson_file', help='Path to GeoJSON file')
-    parser.add_argument('table_name', help='Name of the table to create')
+    parser.add_argument('table_name', nargs='?', default='geojson_data', 
+                       help='Name of the table to create (default: geojson_data)')
     
     args = parser.parse_args()
     
