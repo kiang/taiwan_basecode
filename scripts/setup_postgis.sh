@@ -74,7 +74,7 @@ start_postgis() {
     counter=0
     
     while [ $counter -lt $timeout ]; do
-        if docker-compose exec -T postgis pg_isready -U gis_user -d taiwan_gis &> /dev/null; then
+        if docker exec taiwan_postgis pg_isready -U gis_user -d taiwan_gis &> /dev/null; then
             print_status "PostGIS is ready!"
             return 0
         fi
@@ -100,12 +100,19 @@ stop_postgis() {
 check_status() {
     cd "$SCRIPT_DIR"
     echo "Container status:"
-    docker-compose ps
     
-    if docker-compose exec -T postgis pg_isready -U gis_user -d taiwan_gis &> /dev/null; then
-        print_status "PostGIS is running and ready for connections"
+    # Use docker CLI directly to avoid Python library conflicts
+    if docker ps --format "table {{.Names}}\t{{.Status}}" | grep -q "taiwan_postgis"; then
+        print_status "PostGIS container is running"
+        
+        # Check if PostGIS is ready
+        if docker exec taiwan_postgis pg_isready -U gis_user -d taiwan_gis &> /dev/null; then
+            print_status "PostGIS is ready for connections"
+        else
+            print_warning "PostGIS container is running but not ready"
+        fi
     else
-        print_warning "PostGIS is not ready or not running"
+        print_warning "PostGIS container is not running"
     fi
 }
 
@@ -127,7 +134,7 @@ load_geojson() {
     print_status "Loading GeoJSON file: $geojson_file into table: $table_name"
     
     # Make sure PostGIS is running
-    if ! docker-compose exec -T postgis pg_isready -U gis_user -d taiwan_gis &> /dev/null; then
+    if ! docker exec taiwan_postgis pg_isready -U gis_user -d taiwan_gis &> /dev/null; then
         print_warning "PostGIS is not running. Starting it now..."
         start_postgis
     fi
